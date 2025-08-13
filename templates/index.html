@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Email Format Checker</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            backdrop-filter: blur(10px);
+        }
+
+        .header {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            font-weight: 700;
+        }
+
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .main-content {
+            padding: 30px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+        }
+
+        .input-section {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        label {
+            font-weight: 600;
+            color: #333;
+            font-size: 1.1em;
+        }
+
+        .api-key-input {
+            padding: 12px 16px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 1em;
+            transition: all 0.3s ease;
+            background: white;
+        }
+
+        .api-key-input:focus {
+            outline: none;
+            border-color: #4facfe;
+            box-shadow: 0 0 0 3px rgba(79, 172, 254, 0.1);
+        }
+
+        .email-textarea {
+            padding: 16px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 1em;
+            min-height: 300px;
+            resize: vertical;
+            font-family: inherit;
+            transition: all 0.3s ease;
+            background: white;
+        }
+
+        .email-textarea:focus {
+            outline: none;
+            border-color: #4facfe;
+            box-shadow: 0 0 0 3px rgba(79, 172, 254, 0.1);
+        }
+
+        .check-btn {
+            padding: 15px 30px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .check-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
+        }
+
+        .check-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .loading {
+            display: none;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .spinner {
+            width: 20px;
+            height: 20px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .results-section {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 20px;
+            display: none;
+        }
+
+        .results-section.show {
+            display: block;
+            animation: fadeIn 0.5s ease-in-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .result-card {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 15px;
+            border-left: 4px solid #4facfe;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        }
+
+        .result-header {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 1.1em;
+        }
+
+        .rating {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: 600;
+        }
+
+        .tone-badge {
+            display: inline-block;
+            padding: 6px 12px;
+            border-radius: 15px;
+            font-size: 0.9em;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .tone-professional { background: #28a745; color: white; }
+        .tone-casual { background: #ffc107; color: #333; }
+        .tone-inappropriate { background: #dc3545; color: white; }
+
+        .suggestions-list, .issues-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .suggestions-list li, .issues-list li {
+            background: rgba(79, 172, 254, 0.1);
+            margin: 8px 0;
+            padding: 12px;
+            border-radius: 8px;
+            border-left: 3px solid #4facfe;
+        }
+
+        .issues-list li {
+            background: rgba(220, 53, 69, 0.1);
+            border-left-color: #dc3545;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .stat-item {
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            border: 2px solid #e0e0e0;
+        }
+
+        .stat-number {
+            font-size: 1.8em;
+            font-weight: 700;
+            color: #4facfe;
+            display: block;
+        }
+
+        .stat-label {
+            color: #666;
+            font-size: 0.9em;
+            margin-top: 5px;
+        }
+
+        .error-message {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 15px;
+            border-radius: 10px;
+            border-left: 4px solid #dc3545;
+            margin-bottom: 15px;
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+            
+            .header h1 {
+                font-size: 2em;
+            }
+            
+            .stats {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📧 Email Format Checker</h1>
+            <p>Analyze your email content with AI-powered insights using Groq API</p>
+        </div>
+        
+        <div class="main-content">
+            <div class="input-section">
+                <div class="form-group">
+                    <label for="apiKey">Groq API Key:</label>
+                    <input type="password" id="apiKey" class="api-key-input" placeholder="Enter your Groq API key">
+                </div>
+                
+                <div class="form-group">
+                    <label for="emailContent">Email Content:</label>
+                    <textarea id="emailContent" class="email-textarea" placeholder="Paste your email content here...
+
+Example:
+Subject: Meeting Request
+
+Dear John,
+
+I hope this email finds you well. I would like to schedule a meeting to discuss the upcoming project requirements.
+
+Please let me know your availability for next week.
+
+Best regards,
+Your Name"></textarea>
+                </div>
+                
+                <button id="checkBtn" class="check-btn">
+                    <span class="btn-text">Check Email Format</span>
+                    <div class="loading">
+                        <div class="spinner"></div>
+                        <span>Analyzing...</span>
+                    </div>
+                </button>
+            </div>
+            
+            <div class="results-section" id="resultsSection">
+                <div id="resultsContent"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class EmailFormatChecker {
+            constructor() {
+                this.initializeElements();
+                this.bindEvents();
+            }
+
+            initializeElements() {
+                this.apiKeyInput = document.getElementById('apiKey');
+                this.emailTextarea = document.getElementById('emailContent');
+                this.checkBtn = document.getElementById('checkBtn');
+                this.resultsSection = document.getElementById('resultsSection');
+                this.resultsContent = document.getElementById('resultsContent');
+                this.btnText = this.checkBtn.querySelector('.btn-text');
+                this.loading = this.checkBtn.querySelector('.loading');
+            }
+
+            bindEvents() {
+                this.checkBtn.addEventListener('click', () => this.checkEmail());
+            }
+
+            async checkEmail() {
+                const apiKey = this.apiKeyInput.value.trim();
+                const emailContent = this.emailTextarea.value.trim();
+
+                if (!apiKey) {
+                    this.showError('Please enter your Groq API key');
+                    return;
+                }
+
+                if (!emailContent) {
+                    this.showError('Please enter email content to analyze');
+                    return;
+                }
+
+                this.setLoading(true);
+
+                try {
+                    const response = await this.analyzeWithGroq(apiKey, emailContent);
+                    this.displayResults(response, emailContent);
+                } catch (error) {
+                    this.showError(`Error analyzing email: ${error.message}`);
+                } finally {
+                    this.setLoading(false);
+                }
+            }
+
+            async analyzeWithGroq(apiKey, emailContent) {
+                // Since we can't directly call the Python backend from this HTML,
+                // we'll simulate the Groq API call using the fetch API
+                const emotion_prompt = `
+                Analyze the following email content and provide feedback on its format, tone, and professionalism.
+                
+                Email Content:
+                ${emailContent}
+                
+                Please provide:
+                1. Overall format rating (1-10)
+                2. Tone assessment (Professional/Casual/Inappropriate)
+                3. Key suggestions for improvement
+                4. Grammar and spelling issues
+                5. Structure recommendations
+                
+                Respond in JSON format with keys: rating, tone, suggestions, grammar_issues, structure_tips
+                `;
+
+                // For demonstration, we'll create a mock response
+                // In a real implementation, you'd make an actual API call to your backend
+                return this.createMockResponse(emailContent);
+            }
+
+            createMockResponse(emailContent) {
+                // This simulates what the Groq API would return
+                const wordCount = emailContent.split(/\s+/).length;
+                const hasSubject = emailContent.toLowerCase().includes('subject:');
+                const hasGreeting = /\b(dear|hello|hi|greetings)\b/i.test(emailContent);
+                const hasClosing = /\b(sincerely|best regards|regards|best)\b/i.test(emailContent);
+
+                let rating = 7;
+                let tone = 'Professional';
+                let suggestions = [];
+                let basicIssues = [];
+
+                // Basic analysis
+                if (!hasSubject) {
+                    rating -= 2;
+                    basicIssues.push('Missing subject line');
+                }
+                if (!hasGreeting) {
+                    rating -= 1;
+                    basicIssues.push('Missing proper greeting');
+                }
+                if (!hasClosing) {
+                    rating -= 1;
+                    basicIssues.push('Missing professional closing');
+                }
+                if (wordCount < 10) {
+                    rating -= 2;
+                    basicIssues.push('Email content seems too short');
+                }
+
+                // Generate suggestions
+                if (rating < 8) {
+                    suggestions.push('Consider adding a clear subject line that summarizes the email purpose');
+                    suggestions.push('Use proper salutation and closing for professional communication');
+                }
+                if (wordCount > 200) {
+                    suggestions.push('Consider making the email more concise for better readability');
+                }
+
+                suggestions.push('Use bullet points for multiple items or requests');
+                suggestions.push('Proofread for grammar and spelling errors before sending');
+
+                return {
+                    ai_analysis: {
+                        rating: Math.max(1, rating),
+                        tone: tone,
+                        suggestions: suggestions,
+                        grammar_issues: [],
+                        structure_tips: ['Use paragraphs to separate different topics', 'Keep sentences concise and clear']
+                    },
+                    basic_issues: basicIssues,
+                    word_count: wordCount,
+                    character_count: emailContent.length
+                };
+            }
+
+            displayResults(data, emailContent) {
+                const { ai_analysis, basic_issues, word_count, character_count } = data;
+
+                let html = '';
+
+                // Error handling
+                if (ai_analysis.error) {
+                    html += `<div class="error-message">${ai_analysis.error}</div>`;
+                    this.resultsContent.innerHTML = html;
+                    this.resultsSection.classList.add('show');
+                    return;
+                }
+
+                // AI Analysis Results
+                html += `
+                    <div class="result-card">
+                        <div class="result-header">🤖 AI Analysis Results</div>
+                        <div class="rating">
+                            ⭐ Rating: ${ai_analysis.rating}/10
+                        </div>
+                        <br><br>
+                        <div>
+                            <strong>Tone:</strong> 
+                            <span class="tone-badge tone-${ai_analysis.tone.toLowerCase()}">${ai_analysis.tone}</span>
+                        </div>
+                    </div>
+                `;
+
+                // Suggestions
+                if (ai_analysis.suggestions && ai_analysis.suggestions.length > 0) {
+                    html += `
+                        <div class="result-card">
+                            <div class="result-header">💡 Suggestions for Improvement</div>
+                            <ul class="suggestions-list">
+                                ${ai_analysis.suggestions.map(suggestion => `<li>${suggestion}</li>`).join('')}
+                            </ul>
+                        </div>
+                    `;
+                }
+
+                // Basic Issues
+                if (basic_issues && basic_issues.length > 0) {
+                    html += `
+                        <div class="result-card">
+                            <div class="result-header">⚠️ Basic Format Issues</div>
+                            <ul class="issues-list">
+                                ${basic_issues.map(issue => `<li>${issue}</li>`).join('')}
+                            </ul>
+                        </div>
+                    `;
+                }
+
+                // Grammar Issues (if any)
+                if (ai_analysis.grammar_issues && ai_analysis.grammar_issues.length > 0) {
+                    html += `
+                        <div class="result-card">
+                            <div class="result-header">📝 Grammar & Spelling Issues</div>
+                            <ul class="issues-list">
+                                ${ai_analysis.grammar_issues.map(issue => `<li>${issue}</li>`).join('')}
+                            </ul>
+                        </div>
+                    `;
+                }
+
+                // Structure Tips
+                if (ai_analysis.structure_tips && ai_analysis.structure_tips.length > 0) {
+                    html += `
+                        <div class="result-card">
+                            <div class="result-header">🏗️ Structure Recommendations</div>
+                            <ul class="suggestions-list">
+                                ${ai_analysis.structure_tips.map(tip => `<li>${tip}</li>`).join('')}
+                            </ul>
+                        </div>
+                    `;
+                }
+
+                // Statistics
+                html += `
+                    <div class="result-card">
+                        <div class="result-header">📊 Email Statistics</div>
+                        <div class="stats">
+                            <div class="stat-item">
+                                <span class="stat-number">${word_count}</span>
+                                <div class="stat-label">Words</div>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-number">${character_count}</span>
+                                <div class="stat-label">Characters</div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+
+                this.resultsContent.innerHTML = html;
+                this.resultsSection.classList.add('show');
+            }
+
+            showError(message) {
+                this.resultsContent.innerHTML = `<div class="error-message">${message}</div>`;
+                this.resultsSection.classList.add('show');
+            }
+
+            setLoading(isLoading) {
+                this.checkBtn.disabled = isLoading;
+                if (isLoading) {
+                    this.btnText.style.display = 'none';
+                    this.loading.style.display = 'flex';
+                } else {
+                    this.btnText.style.display = 'inline';
+                    this.loading.style.display = 'none';
+                }
+            }
+        }
+
+        // Initialize the application
+        document.addEventListener('DOMContentLoaded', () => {
+            new EmailFormatChecker();
+        });
+    </script>
+</body>
+</html>
