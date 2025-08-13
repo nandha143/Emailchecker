@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Email Format Checker</title>
+    <title>Smart Email Generator & Formatter</title>
     <style>
         * {
             margin: 0;
@@ -19,7 +19,7 @@
         }
 
         .container {
-            max-width: 1200px;
+            max-width: 1400px;
             margin: 0 auto;
             background: rgba(255, 255, 255, 0.95);
             border-radius: 20px;
@@ -46,6 +46,30 @@
             opacity: 0.9;
         }
 
+        .mode-toggle {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin: 20px 0;
+        }
+
+        .mode-btn {
+            padding: 12px 24px;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 25px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 600;
+        }
+
+        .mode-btn.active {
+            background: white;
+            color: #4facfe;
+            border-color: white;
+        }
+
         .main-content {
             padding: 30px;
             display: grid;
@@ -69,42 +93,37 @@
             font-weight: 600;
             color: #333;
             font-size: 1.1em;
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
 
-        .api-key-input {
+        .input-field, .email-textarea {
             padding: 12px 16px;
             border: 2px solid #e0e0e0;
             border-radius: 10px;
             font-size: 1em;
             transition: all 0.3s ease;
             background: white;
+            font-family: inherit;
         }
 
-        .api-key-input:focus {
+        .input-field:focus, .email-textarea:focus {
             outline: none;
             border-color: #4facfe;
             box-shadow: 0 0 0 3px rgba(79, 172, 254, 0.1);
         }
 
         .email-textarea {
-            padding: 16px;
-            border: 2px solid #e0e0e0;
-            border-radius: 10px;
-            font-size: 1em;
-            min-height: 300px;
+            min-height: 120px;
             resize: vertical;
-            font-family: inherit;
-            transition: all 0.3s ease;
-            background: white;
         }
 
-        .email-textarea:focus {
-            outline: none;
-            border-color: #4facfe;
-            box-shadow: 0 0 0 3px rgba(79, 172, 254, 0.1);
+        .casual-input {
+            min-height: 100px;
         }
 
-        .check-btn {
+        .action-btn {
             padding: 15px 30px;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
@@ -118,12 +137,12 @@
             overflow: hidden;
         }
 
-        .check-btn:hover {
+        .action-btn:hover {
             transform: translateY(-2px);
             box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
         }
 
-        .check-btn:disabled {
+        .action-btn:disabled {
             opacity: 0.6;
             cursor: not-allowed;
             transform: none;
@@ -153,6 +172,8 @@
             border-radius: 15px;
             padding: 20px;
             display: none;
+            max-height: 80vh;
+            overflow-y: auto;
         }
 
         .results-section.show {
@@ -177,19 +198,67 @@
         .result-header {
             font-weight: 600;
             color: #333;
-            margin-bottom: 10px;
-            font-size: 1.1em;
-        }
-
-        .rating {
-            display: inline-flex;
+            margin-bottom: 15px;
+            font-size: 1.2em;
+            display: flex;
             align-items: center;
             gap: 10px;
+        }
+
+        .generated-email {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.95em;
+            line-height: 1.6;
+            white-space: pre-wrap;
+            border: 1px solid #e0e0e0;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .copy-btn {
+            margin-top: 10px;
+            padding: 8px 16px;
+            background: #28a745;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9em;
+            transition: background 0.3s ease;
+        }
+
+        .copy-btn:hover {
+            background: #218838;
+        }
+
+        .analysis-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .score-card {
             background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
             color: white;
-            padding: 8px 16px;
-            border-radius: 20px;
-            font-weight: 600;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        .score-number {
+            font-size: 2.5em;
+            font-weight: 700;
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        .score-label {
+            font-size: 0.9em;
+            opacity: 0.9;
         }
 
         .tone-badge {
@@ -202,15 +271,15 @@
         }
 
         .tone-professional { background: #28a745; color: white; }
-        .tone-casual { background: #ffc107; color: #333; }
-        .tone-inappropriate { background: #dc3545; color: white; }
+        .tone-semi-professional { background: #ffc107; color: #333; }
+        .tone-casual { background: #17a2b8; color: white; }
 
-        .suggestions-list, .issues-list {
+        .list-items {
             list-style: none;
             padding: 0;
         }
 
-        .suggestions-list li, .issues-list li {
+        .list-items li {
             background: rgba(79, 172, 254, 0.1);
             margin: 8px 0;
             padding: 12px;
@@ -218,37 +287,42 @@
             border-left: 3px solid #4facfe;
         }
 
+        .improvements-list li {
+            background: rgba(255, 193, 7, 0.1);
+            border-left-color: #ffc107;
+        }
+
         .issues-list li {
             background: rgba(220, 53, 69, 0.1);
             border-left-color: #dc3545;
         }
 
-        .stats {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 15px;
-            margin-top: 15px;
+        .component-check {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 0;
         }
 
-        .stat-item {
-            background: white;
-            padding: 15px;
-            border-radius: 10px;
-            text-align: center;
-            border: 2px solid #e0e0e0;
+        .check-icon {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: bold;
         }
 
-        .stat-number {
-            font-size: 1.8em;
-            font-weight: 700;
-            color: #4facfe;
-            display: block;
+        .check-yes {
+            background: #28a745;
+            color: white;
         }
 
-        .stat-label {
-            color: #666;
-            font-size: 0.9em;
-            margin-top: 5px;
+        .check-no {
+            background: #dc3545;
+            color: white;
         }
 
         .error-message {
@@ -258,6 +332,16 @@
             border-radius: 10px;
             border-left: 4px solid #dc3545;
             margin-bottom: 15px;
+        }
+
+        .mode-section {
+            display: none;
+        }
+
+        .mode-section.active {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
         }
 
         @media (max-width: 768px) {
@@ -270,8 +354,14 @@
                 font-size: 2em;
             }
             
-            .stats {
-                grid-template-columns: 1fr;
+            .analysis-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+
+            .mode-toggle {
+                flex-direction: column;
+                align-items: center;
+                gap: 10px;
             }
         }
     </style>
@@ -279,41 +369,72 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1>📧 Email Format Checker</h1>
-            <p>Analyze your email content with AI-powered insights using Groq API</p>
+            <h1>🚀 Smart Email Generator & Formatter</h1>
+            <p>Convert casual messages to professional emails with AI-powered analysis</p>
+            
+            <div class="mode-toggle">
+                <button class="mode-btn active" onclick="switchMode('generate')">📝 Generate Email</button>
+                <button class="mode-btn" onclick="switchMode('analyze')">🔍 Analyze Email</button>
+            </div>
         </div>
         
         <div class="main-content">
             <div class="input-section">
-                <div class="form-group">
-                    <label for="apiKey">Groq API Key:</label>
-                    <input type="password" id="apiKey" class="api-key-input" placeholder="Enter your Groq API key">
+                <!-- Generate Email Mode -->
+                <div id="generateMode" class="mode-section active">
+                    <div class="form-group">
+                        <label for="casualMessage">🗨️ Your Message (Casual):</label>
+                        <textarea id="casualMessage" class="email-textarea casual-input" 
+                                  placeholder="Type your casual message here...
+
+Example: 'i am having a fever i am planning to leave'"></textarea>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="senderName">👤 Your Name (Optional):</label>
+                        <input type="text" id="senderName" class="input-field" placeholder="John Doe">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="recipientName">👥 Recipient Name (Optional):</label>
+                        <input type="text" id="recipientName" class="input-field" placeholder="Manager/HR">
+                    </div>
+                    
+                    <button id="generateBtn" class="action-btn">
+                        <span class="btn-text">Generate Professional Email</span>
+                        <div class="loading">
+                            <div class="spinner"></div>
+                            <span>Generating...</span>
+                        </div>
+                    </button>
                 </div>
-                
-                <div class="form-group">
-                    <label for="emailContent">Email Content:</label>
-                    <textarea id="emailContent" class="email-textarea" placeholder="Paste your email content here...
+
+                <!-- Analyze Email Mode -->
+                <div id="analyzeMode" class="mode-section">
+                    <div class="form-group">
+                        <label for="existingEmail">📧 Email Content to Analyze:</label>
+                        <textarea id="existingEmail" class="email-textarea" 
+                                  placeholder="Paste your existing email here for analysis...
 
 Example:
-Subject: Meeting Request
+Subject: Sick Leave Request
 
-Dear John,
+Dear Manager,
 
-I hope this email finds you well. I would like to schedule a meeting to discuss the upcoming project requirements.
-
-Please let me know your availability for next week.
+I am writing to inform you that I am feeling unwell today and will not be able to come to work.
 
 Best regards,
-Your Name"></textarea>
-                </div>
-                
-                <button id="checkBtn" class="check-btn">
-                    <span class="btn-text">Check Email Format</span>
-                    <div class="loading">
-                        <div class="spinner"></div>
-                        <span>Analyzing...</span>
+John Doe"></textarea>
                     </div>
-                </button>
+                    
+                    <button id="analyzeBtn" class="action-btn">
+                        <span class="btn-text">Analyze Email Quality</span>
+                        <div class="loading">
+                            <div class="spinner"></div>
+                            <span>Analyzing...</span>
+                        </div>
+                    </button>
+                </div>
             </div>
             
             <div class="results-section" id="resultsSection">
@@ -323,221 +444,285 @@ Your Name"></textarea>
     </div>
 
     <script>
-        class EmailFormatChecker {
+        class SmartEmailProcessor {
             constructor() {
+                this.currentMode = 'generate';
                 this.initializeElements();
                 this.bindEvents();
             }
 
             initializeElements() {
-                this.apiKeyInput = document.getElementById('apiKey');
-                this.emailTextarea = document.getElementById('emailContent');
-                this.checkBtn = document.getElementById('checkBtn');
+                // Generate mode elements
+                this.casualMessageTextarea = document.getElementById('casualMessage');
+                this.senderNameInput = document.getElementById('senderName');
+                this.recipientNameInput = document.getElementById('recipientName');
+                this.generateBtn = document.getElementById('generateBtn');
+
+                // Analyze mode elements
+                this.existingEmailTextarea = document.getElementById('existingEmail');
+                this.analyzeBtn = document.getElementById('analyzeBtn');
+
+                // Common elements
                 this.resultsSection = document.getElementById('resultsSection');
                 this.resultsContent = document.getElementById('resultsContent');
-                this.btnText = this.checkBtn.querySelector('.btn-text');
-                this.loading = this.checkBtn.querySelector('.loading');
             }
 
             bindEvents() {
-                this.checkBtn.addEventListener('click', () => this.checkEmail());
+                this.generateBtn.addEventListener('click', () => this.generateEmail());
+                this.analyzeBtn.addEventListener('click', () => this.analyzeEmail());
             }
 
-            async checkEmail() {
-                const apiKey = this.apiKeyInput.value.trim();
-                const emailContent = this.emailTextarea.value.trim();
+            async generateEmail() {
+                const casualMessage = this.casualMessageTextarea.value.trim();
+                const senderName = this.senderNameInput.value.trim();
+                const recipientName = this.recipientNameInput.value.trim();
 
-                if (!apiKey) {
-                    this.showError('Please enter your Groq API key');
+                if (!casualMessage) {
+                    this.showError('Please enter your casual message');
                     return;
                 }
+
+                this.setLoading(this.generateBtn, true);
+
+                try {
+                    const response = await this.callAPI('/generate_email', {
+                        message: casualMessage,
+                        sender_name: senderName,
+                        recipient_name: recipientName
+                    });
+
+                    this.displayGenerationResults(response);
+                } catch (error) {
+                    this.showError(`Error generating email: ${error.message}`);
+                } finally {
+                    this.setLoading(this.generateBtn, false);
+                }
+            }
+
+            async analyzeEmail() {
+                const emailContent = this.existingEmailTextarea.value.trim();
 
                 if (!emailContent) {
                     this.showError('Please enter email content to analyze');
                     return;
                 }
 
-                this.setLoading(true);
+                this.setLoading(this.analyzeBtn, true);
 
                 try {
-                    const response = await this.analyzeWithGroq(apiKey, emailContent);
-                    this.displayResults(response, emailContent);
+                    const response = await this.callAPI('/analyze_existing', {
+                        content: emailContent
+                    });
+
+                    this.displayAnalysisResults(response);
                 } catch (error) {
                     this.showError(`Error analyzing email: ${error.message}`);
                 } finally {
-                    this.setLoading(false);
+                    this.setLoading(this.analyzeBtn, false);
                 }
             }
 
-            async analyzeWithGroq(apiKey, emailContent) {
-                // Since we can't directly call the Python backend from this HTML,
-                // we'll simulate the Groq API call using the fetch API
-                const emotion_prompt = `
-                Analyze the following email content and provide feedback on its format, tone, and professionalism.
-                
-                Email Content:
-                ${emailContent}
-                
-                Please provide:
-                1. Overall format rating (1-10)
-                2. Tone assessment (Professional/Casual/Inappropriate)
-                3. Key suggestions for improvement
-                4. Grammar and spelling issues
-                5. Structure recommendations
-                
-                Respond in JSON format with keys: rating, tone, suggestions, grammar_issues, structure_tips
-                `;
-
-                // For demonstration, we'll create a mock response
-                // In a real implementation, you'd make an actual API call to your backend
-                return this.createMockResponse(emailContent);
+            async callAPI(endpoint, data) {
+                // In a real implementation, this would call your Flask backend
+                // For now, we'll simulate the API response
+                return new Promise((resolve) => {
+                    setTimeout(() => {
+                        if (endpoint === '/generate_email') {
+                            resolve(this.simulateGenerationResponse(data));
+                        } else {
+                            resolve(this.simulateAnalysisResponse(data));
+                        }
+                    }, 2000);
+                });
             }
 
-            createMockResponse(emailContent) {
-                // This simulates what the Groq API would return
-                const wordCount = emailContent.split(/\s+/).length;
-                const hasSubject = emailContent.toLowerCase().includes('subject:');
-                const hasGreeting = /\b(dear|hello|hi|greetings)\b/i.test(emailContent);
-                const hasClosing = /\b(sincerely|best regards|regards|best)\b/i.test(emailContent);
+            simulateGenerationResponse(data) {
+                const { message, sender_name, recipient_name } = data;
+                
+                // Simulate formal email generation
+                let formalEmail = '';
+                
+                if (message.toLowerCase().includes('fever') && message.toLowerCase().includes('leave')) {
+                    formalEmail = `Subject: Sick Leave Request - ${new Date().toLocaleDateString()}
 
-                let rating = 7;
-                let tone = 'Professional';
-                let suggestions = [];
-                let basicIssues = [];
+Dear ${recipient_name || 'Manager'},
 
-                // Basic analysis
-                if (!hasSubject) {
-                    rating -= 2;
-                    basicIssues.push('Missing subject line');
-                }
-                if (!hasGreeting) {
-                    rating -= 1;
-                    basicIssues.push('Missing proper greeting');
-                }
-                if (!hasClosing) {
-                    rating -= 1;
-                    basicIssues.push('Missing professional closing');
-                }
-                if (wordCount < 10) {
-                    rating -= 2;
-                    basicIssues.push('Email content seems too short');
-                }
+I hope this email finds you well. I am writing to inform you that I am currently experiencing flu-like symptoms, including a fever, which makes it necessary for me to take sick leave today.
 
-                // Generate suggestions
-                if (rating < 8) {
-                    suggestions.push('Consider adding a clear subject line that summarizes the email purpose');
-                    suggestions.push('Use proper salutation and closing for professional communication');
-                }
-                if (wordCount > 200) {
-                    suggestions.push('Consider making the email more concise for better readability');
-                }
+I understand the importance of my responsibilities and will ensure that any urgent matters are addressed remotely if possible. I will monitor my health condition and keep you updated on my expected return date.
 
-                suggestions.push('Use bullet points for multiple items or requests');
-                suggestions.push('Proofread for grammar and spelling errors before sending');
+Please let me know if there are any immediate priorities that need attention during my absence.
+
+Thank you for your understanding.
+
+Best regards,
+${sender_name || '[Your Name]'}
+${sender_name ? '[Your Position]' : ''}
+${sender_name ? '[Your Contact Information]' : ''}`;
+                } else {
+                    formalEmail = `Subject: [Auto-generated based on your message]
+
+Dear ${recipient_name || '[Recipient Name]'},
+
+${this.convertToFormalLanguage(message)}
+
+Best regards,
+${sender_name || '[Your Name]'}`;
+                }
 
                 return {
-                    ai_analysis: {
-                        rating: Math.max(1, rating),
-                        tone: tone,
-                        suggestions: suggestions,
+                    original_message: message,
+                    formal_email: formalEmail,
+                    analysis: {
+                        overall_rating: "9",
+                        tone_assessment: "Professional",
+                        strengths: [
+                            "Clear and professional subject line",
+                            "Appropriate greeting and closing",
+                            "Well-structured content",
+                            "Professional tone throughout"
+                        ],
+                        improvements: [
+                            "Consider adding specific return date if known",
+                            "Include contact information for urgent matters"
+                        ],
                         grammar_issues: [],
-                        structure_tips: ['Use paragraphs to separate different topics', 'Keep sentences concise and clear']
+                        format_score: "9",
+                        clarity_score: "9"
                     },
-                    basic_issues: basicIssues,
-                    word_count: wordCount,
-                    character_count: emailContent.length
+                    components: {
+                        has_subject: true,
+                        has_greeting: true,
+                        has_closing: true,
+                        has_signature: true,
+                        word_count: formalEmail.split(' ').length,
+                        character_count: formalEmail.length,
+                        paragraph_count: formalEmail.split('\n\n').length
+                    }
                 };
             }
 
-            displayResults(data, emailContent) {
-                const { ai_analysis, basic_issues, word_count, character_count } = data;
+            simulateAnalysisResponse(data) {
+                const emailContent = data.content;
+                const hasSubject = emailContent.toLowerCase().includes('subject:');
+                const hasGreeting = /\b(dear|hello|hi|greetings)\b/i.test(emailContent);
+                const hasClosing = /\b(sincerely|best regards|regards|best)\b/i.test(emailContent);
+                
+                let rating = 7;
+                if (!hasSubject) rating -= 2;
+                if (!hasGreeting) rating -= 1;
+                if (!hasClosing) rating -= 1;
 
+                return {
+                    email_content: emailContent,
+                    analysis: {
+                        overall_rating: rating.toString(),
+                        tone_assessment: hasGreeting && hasClosing ? "Professional" : "Casual",
+                        strengths: [
+                            hasSubject ? "Includes subject line" : "Clear message content",
+                            hasGreeting ? "Professional greeting" : "Direct communication",
+                            hasClosing ? "Appropriate closing" : "Concise format"
+                        ].filter(Boolean),
+                        improvements: [
+                            !hasSubject ? "Add a clear subject line" : null,
+                            !hasGreeting ? "Include a professional greeting" : null,
+                            !hasClosing ? "Add a professional closing" : null,
+                            "Consider proofreading for any grammar issues"
+                        ].filter(Boolean),
+                        grammar_issues: [],
+                        format_score: rating.toString(),
+                        clarity_score: (rating + 1).toString()
+                    },
+                    components: {
+                        has_subject: hasSubject,
+                        has_greeting: hasGreeting,
+                        has_closing: hasClosing,
+                        has_signature: /\n\s*[A-Z][a-z]+ [A-Z][a-z]+\s*$/m.test(emailContent),
+                        word_count: emailContent.split(' ').length,
+                        character_count: emailContent.length,
+                        paragraph_count: emailContent.split('\n\n').length
+                    }
+                };
+            }
+
+            convertToFormalLanguage(casualMessage) {
+                // Simple conversion logic
+                let formal = casualMessage.charAt(0).toUpperCase() + casualMessage.slice(1);
+                formal = formal.replace(/\bi\b/g, 'I');
+                formal = formal.replace(/u\b/g, 'you');
+                formal = formal.replace(/ur\b/g, 'your');
+                return formal + (formal.endsWith('.') ? '' : '.');
+            }
+
+            displayGenerationResults(data) {
                 let html = '';
 
-                // Error handling
-                if (ai_analysis.error) {
-                    html += `<div class="error-message">${ai_analysis.error}</div>`;
-                    this.resultsContent.innerHTML = html;
-                    this.resultsSection.classList.add('show');
-                    return;
-                }
-
-                // AI Analysis Results
+                // Generated Email
                 html += `
                     <div class="result-card">
-                        <div class="result-header">🤖 AI Analysis Results</div>
-                        <div class="rating">
-                            ⭐ Rating: ${ai_analysis.rating}/10
+                        <div class="result-header">✨ Generated Professional Email</div>
+                        <div class="generated-email">${data.formal_email}</div>
+                        <button class="copy-btn" onclick="navigator.clipboard.writeText(\`${data.formal_email.replace(/`/g, '\\`')}\`)">
+                            📋 Copy Email
+                        </button>
+                    </div>
+                `;
+
+                // Analysis scores
+                const analysis = data.analysis;
+                html += `
+                    <div class="result-card">
+                        <div class="result-header">📊 Quality Analysis</div>
+                        <div class="analysis-grid">
+                            <div class="score-card">
+                                <span class="score-number">${analysis.format_score}</span>
+                                <div class="score-label">Format Score</div>
+                            </div>
+                            <div class="score-card">
+                                <span class="score-number">${analysis.clarity_score}</span>
+                                <div class="score-label">Clarity Score</div>
+                            </div>
                         </div>
-                        <br><br>
-                        <div>
-                            <strong>Tone:</strong> 
-                            <span class="tone-badge tone-${ai_analysis.tone.toLowerCase()}">${ai_analysis.tone}</span>
+                        <div style="margin-top: 15px;">
+                            <strong>Tone Assessment:</strong>
+                            <span class="tone-badge tone-${analysis.tone_assessment.toLowerCase().replace('-', '')}">${analysis.tone_assessment}</span>
                         </div>
                     </div>
                 `;
 
-                // Suggestions
-                if (ai_analysis.suggestions && ai_analysis.suggestions.length > 0) {
+                // Strengths
+                if (analysis.strengths && analysis.strengths.length > 0) {
+                    html += `
+                        <div class="result-card">
+                            <div class="result-header">✅ Strengths</div>
+                            <ul class="list-items">
+                                ${analysis.strengths.map(strength => `<li>${strength}</li>`).join('')}
+                            </ul>
+                        </div>
+                    `;
+                }
+
+                // Improvements
+                if (analysis.improvements && analysis.improvements.length > 0) {
                     html += `
                         <div class="result-card">
                             <div class="result-header">💡 Suggestions for Improvement</div>
-                            <ul class="suggestions-list">
-                                ${ai_analysis.suggestions.map(suggestion => `<li>${suggestion}</li>`).join('')}
+                            <ul class="list-items improvements-list">
+                                ${analysis.improvements.map(improvement => `<li>${improvement}</li>`).join('')}
                             </ul>
                         </div>
                     `;
                 }
 
-                // Basic Issues
-                if (basic_issues && basic_issues.length > 0) {
-                    html += `
-                        <div class="result-card">
-                            <div class="result-header">⚠️ Basic Format Issues</div>
-                            <ul class="issues-list">
-                                ${basic_issues.map(issue => `<li>${issue}</li>`).join('')}
-                            </ul>
-                        </div>
-                    `;
-                }
+                // Email Components Check
+                html += this.generateComponentsCheck(data.components);
 
-                // Grammar Issues (if any)
-                if (ai_analysis.grammar_issues && ai_analysis.grammar_issues.length > 0) {
-                    html += `
-                        <div class="result-card">
-                            <div class="result-header">📝 Grammar & Spelling Issues</div>
-                            <ul class="issues-list">
-                                ${ai_analysis.grammar_issues.map(issue => `<li>${issue}</li>`).join('')}
-                            </ul>
-                        </div>
-                    `;
-                }
-
-                // Structure Tips
-                if (ai_analysis.structure_tips && ai_analysis.structure_tips.length > 0) {
-                    html += `
-                        <div class="result-card">
-                            <div class="result-header">🏗️ Structure Recommendations</div>
-                            <ul class="suggestions-list">
-                                ${ai_analysis.structure_tips.map(tip => `<li>${tip}</li>`).join('')}
-                            </ul>
-                        </div>
-                    `;
-                }
-
-                // Statistics
+                // Original Message
                 html += `
                     <div class="result-card">
-                        <div class="result-header">📊 Email Statistics</div>
-                        <div class="stats">
-                            <div class="stat-item">
-                                <span class="stat-number">${word_count}</span>
-                                <div class="stat-label">Words</div>
-                            </div>
-                            <div class="stat-item">
-                                <span class="stat-number">${character_count}</span>
-                                <div class="stat-label">Characters</div>
-                            </div>
+                        <div class="result-header">📝 Original Message</div>
+                        <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; font-style: italic;">
+                            "${data.original_message}"
                         </div>
                     </div>
                 `;
@@ -546,27 +731,176 @@ Your Name"></textarea>
                 this.resultsSection.classList.add('show');
             }
 
+            displayAnalysisResults(data) {
+                let html = '';
+
+                // Analysis scores
+                const analysis = data.analysis;
+                html += `
+                    <div class="result-card">
+                        <div class="result-header">📊 Email Quality Analysis</div>
+                        <div class="analysis-grid">
+                            <div class="score-card">
+                                <span class="score-number">${analysis.overall_rating}</span>
+                                <div class="score-label">Overall Rating</div>
+                            </div>
+                            <div class="score-card">
+                                <span class="score-number">${analysis.format_score}</span>
+                                <div class="score-label">Format Score</div>
+                            </div>
+                            <div class="score-card">
+                                <span class="score-number">${analysis.clarity_score}</span>
+                                <div class="score-label">Clarity Score</div>
+                            </div>
+                        </div>
+                        <div style="margin-top: 15px;">
+                            <strong>Tone Assessment:</strong>
+                            <span class="tone-badge tone-${analysis.tone_assessment.toLowerCase().replace('-', '')}">${analysis.tone_assessment}</span>
+                        </div>
+                    </div>
+                `;
+
+                // Error handling
+                if (analysis.error) {
+                    html += `<div class="error-message">${analysis.error}</div>`;
+                }
+
+                // Strengths
+                if (analysis.strengths && analysis.strengths.length > 0) {
+                    html += `
+                        <div class="result-card">
+                            <div class="result-header">✅ Strengths</div>
+                            <ul class="list-items">
+                                ${analysis.strengths.map(strength => `<li>${strength}</li>`).join('')}
+                            </ul>
+                        </div>
+                    `;
+                }
+
+                // Improvements
+                if (analysis.improvements && analysis.improvements.length > 0) {
+                    html += `
+                        <div class="result-card">
+                            <div class="result-header">💡 Suggestions for Improvement</div>
+                            <ul class="list-items improvements-list">
+                                ${analysis.improvements.map(improvement => `<li>${improvement}</li>`).join('')}
+                            </ul>
+                        </div>
+                    `;
+                }
+
+                // Grammar Issues
+                if (analysis.grammar_issues && analysis.grammar_issues.length > 0) {
+                    html += `
+                        <div class="result-card">
+                            <div class="result-header">📝 Grammar & Spelling Issues</div>
+                            <ul class="list-items issues-list">
+                                ${analysis.grammar_issues.map(issue => `<li>${issue}</li>`).join('')}
+                            </ul>
+                        </div>
+                    `;
+                }
+
+                // Email Components Check
+                html += this.generateComponentsCheck(data.components);
+
+                this.resultsContent.innerHTML = html;
+                this.resultsSection.classList.add('show');
+            }
+
+            generateComponentsCheck(components) {
+                return `
+                    <div class="result-card">
+                        <div class="result-header">🔍 Email Components Analysis</div>
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px;">
+                            <div class="component-check">
+                                <div class="check-icon ${components.has_subject ? 'check-yes' : 'check-no'}">
+                                    ${components.has_subject ? '✓' : '✗'}
+                                </div>
+                                <span>Subject Line</span>
+                            </div>
+                            <div class="component-check">
+                                <div class="check-icon ${components.has_greeting ? 'check-yes' : 'check-no'}">
+                                    ${components.has_greeting ? '✓' : '✗'}
+                                </div>
+                                <span>Professional Greeting</span>
+                            </div>
+                            <div class="component-check">
+                                <div class="check-icon ${components.has_closing ? 'check-yes' : 'check-no'}">
+                                    ${components.has_closing ? '✓' : '✗'}
+                                </div>
+                                <span>Professional Closing</span>
+                            </div>
+                            <div class="component-check">
+                                <div class="check-icon ${components.has_signature ? 'check-yes' : 'check-no'}">
+                                    ${components.has_signature ? '✓' : '✗'}
+                                </div>
+                                <span>Signature</span>
+                            </div>
+                        </div>
+                        <div style="margin-top: 20px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; text-align: center;">
+                            <div>
+                                <strong style="color: #4facfe; font-size: 1.5em;">${components.word_count}</strong>
+                                <div style="color: #666; font-size: 0.9em;">Words</div>
+                            </div>
+                            <div>
+                                <strong style="color: #4facfe; font-size: 1.5em;">${components.character_count}</strong>
+                                <div style="color: #666; font-size: 0.9em;">Characters</div>
+                            </div>
+                            <div>
+                                <strong style="color: #4facfe; font-size: 1.5em;">${components.paragraph_count}</strong>
+                                <div style="color: #666; font-size: 0.9em;">Paragraphs</div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+
             showError(message) {
                 this.resultsContent.innerHTML = `<div class="error-message">${message}</div>`;
                 this.resultsSection.classList.add('show');
             }
 
-            setLoading(isLoading) {
-                this.checkBtn.disabled = isLoading;
+            setLoading(button, isLoading) {
+                const btnText = button.querySelector('.btn-text');
+                const loading = button.querySelector('.loading');
+                
+                button.disabled = isLoading;
                 if (isLoading) {
-                    this.btnText.style.display = 'none';
-                    this.loading.style.display = 'flex';
+                    btnText.style.display = 'none';
+                    loading.style.display = 'flex';
                 } else {
-                    this.btnText.style.display = 'inline';
-                    this.loading.style.display = 'none';
+                    btnText.style.display = 'inline';
+                    loading.style.display = 'none';
                 }
+            }
+        }
+
+        function switchMode(mode) {
+            // Update active mode button
+            document.querySelectorAll('.mode-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            // Show/hide mode sections
+            document.querySelectorAll('.mode-section').forEach(section => section.classList.remove('active'));
+            document.getElementById(mode + 'Mode').classList.add('active');
+            
+            // Hide results when switching modes
+            document.getElementById('resultsSection').classList.remove('show');
+            
+            // Update current mode
+            if (window.emailProcessor) {
+                window.emailProcessor.currentMode = mode;
             }
         }
 
         // Initialize the application
         document.addEventListener('DOMContentLoaded', () => {
-            new EmailFormatChecker();
+            window.emailProcessor = new SmartEmailProcessor();
         });
     </script>
 </body>
-</html>
+</html><span class="score-number">${analysis.overall_rating}</span>
+                                <div class="score-label">Overall Rating</div>
+                            </div>
+                            <div class="score-card">
